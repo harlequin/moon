@@ -88,15 +88,17 @@ else
 	download_url="https://github.com/moonrepo/proto/releases/download/v$version/$target$ext"
 fi
 
-temp_dir="$HOME/.proto/temp/proto/$target"
-download_file="$temp_dir$ext"
-
-if [[ -z "$PROTO_HOME" ]]; then
-	install_dir="$HOME/.proto/bin"
+if [[ -n "$PROTO_HOME" ]]; then
+	home_dir="$PROTO_HOME"
+elif [[ -n "$XDG_DATA_HOME" ]]; then
+	home_dir="$XDG_DATA_HOME/proto"
 else
-	install_dir="$PROTO_HOME/bin"
+	home_dir="$HOME/.proto"
 fi
 
+temp_dir="$home_dir/temp/proto/$target"
+download_file="$temp_dir$ext"
+install_dir="$home_dir/bin"
 bin_path="$install_dir/$bin"
 shim_path="$install_dir/$shim_bin"
 
@@ -111,13 +113,13 @@ curl --fail --location --progress-bar --output "$download_file" "$download_url"
 if [[ "$ext" == ".zip" ]]; then
 	req_archive "unzip"
 
-	unzip -d "$temp_dir" "$download_file"
-
-	# Unzip doesnt remove components folder
-	temp_dir="$temp_dir/$target"
+	unzip -j -d "$temp_dir" "$download_file"
 else
-	req_archive "gzip"
-	req_archive "xz" "xz" "xz-utils"
+	if [[ "$ext" == ".gz" ]]; then
+		req_archive "gzip"
+	elif [[ "$ext" == ".xz" ]]; then
+		req_archive "xz" "xz" "xz-utils"
+	fi
 
 	tar xf "$download_file" --strip-components 1 -C "$temp_dir"
 fi

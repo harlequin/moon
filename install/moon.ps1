@@ -13,16 +13,36 @@ if ($Args.Length -eq 1) {
   $Version = $Args.Get(0)
 }
 
+# If >= v2, use the cargo-dist installer instead!
+if ($Version -notmatch '^[01]\.') {
+  $ScriptUrl = if ($Version -eq "latest") {
+    "https://github.com/moonrepo/moon/releases/latest/download/moon_cli-installer.ps1"
+  } else {
+    "https://github.com/moonrepo/moon/releases/download/v${Version}/moon_cli-installer.ps1"
+  }
+
+  powershell.exe -ExecutionPolicy Bypass -c "irm ${ScriptUrl} | iex"
+  exit $LASTEXITCODE
+}
+
 $DownloadUrl = if ($Version -eq "latest") {
   "https://github.com/moonrepo/moon/releases/latest/download/${Target}"
 } else {
   "https://github.com/moonrepo/moon/releases/download/v${Version}/${Target}"
 }
 
+$HomeDir = if ($env:MOON_HOME) {
+  $env:MOON_HOME
+} elseif ($env:XDG_DATA_HOME) {
+  "$($env:XDG_DATA_HOME)\moon"
+} else {
+  "${Home}\.moon"
+}
+
 $InstallDir = if ($env:MOON_INSTALL_DIR) {
   $env:MOON_INSTALL_DIR
 } else {
-  "${Home}\.moon\bin"
+  "${HomeDir}\bin"
 }
 
 $BinPath = "${InstallDir}\moon.exe"
